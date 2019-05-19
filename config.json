@@ -1,0 +1,12 @@
+{
+  
+  "clientId": "CLIENT_ID_FROM_HOUNDIFY",
+  "clientKey": "CLIENT_KEY_FROM_HOUNDIFY",
+  
+  "port": 3446,
+
+  "https": false,
+  "sslKeyFile": "server.key",
+  "sslCrtFile": "server.crt"  
+
+}
