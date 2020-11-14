@@ -117,7 +117,7 @@ const LaunchRequestHandler = {
         console.log("Got my recipe brooo", recipeValue);
 
         let response = await makeHoundifyRequest({
-            query: "Get the best recipe for " + recipeValue,
+            query: "show me the recipe for " + recipeValue,
             clientId:  config.clientId, 
             clientKey: config.clientKey,
             requestInfo: {
@@ -131,7 +131,7 @@ const LaunchRequestHandler = {
         conversationState = response.AllResults[0].ConversationState;
         console.log(response.AllResults[0].WrittenResponse);
 
-        recipe = response.AllResults[0].Recipe;
+        recipe = response.AllResults[0].InformationNuggets[0].DishDetails;
         console.log('here is the response recipe////', recipe);
         stepLength = recipe.Instructions.length;
 
@@ -140,6 +140,8 @@ const LaunchRequestHandler = {
             let j = i+1;
             instructions =  instructions + '<br>'+ j + ')' + recipe.Instructions[i]
         }
+
+        console.log('in the response, here are the number of steps', stepLength, 'and instruction 0', recipe.Instructions[0], 'and ingredients', recipe.Ingredients[0])
 
     if (supportsAPL(handlerInput)) {
         console.log('now rendering');
@@ -158,13 +160,13 @@ const LaunchRequestHandler = {
                       "largeSourceUrl":null,
                       "sources":[
                          {
-                            "url": recipe.ImageURLs[0] || "https://d2o906d8ln7ui1.cloudfront.net/images/BT2_Background.png",
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/BT2_Background.png",
                             "size":"small",
                             "widthPixels":0,
                             "heightPixels":0
                          },
                          {
-                            "url": recipe.ImageURLs[0] || "https://d2o906d8ln7ui1.cloudfront.net/images/BT2_Background.png",
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/BT2_Background.png",
                             "size":"large",
                             "widthPixels":0,
                             "heightPixels":0
@@ -194,15 +196,15 @@ const LaunchRequestHandler = {
                    "textContent":{
                       "title":{
                          "type":"PlainText",
-                         "text":recipe.Title
+                         "text":recipe.Name
                       },
                       "subtitle":{
                          "type":"PlainText",
-                         "text": recipe.AllRecipesRecipe.cookMinutes + 'minutes'
+                         "text": recipe.TotalMinutes + 'minutes'
                       },
                       "primaryText":{
                          "type":"PlainText",
-                         "text": recipe.AllRecipesRecipe.description
+                         "text": recipe.Description
                       },
                       "InstructionsText":{
                          "type":"PlainText",
@@ -221,13 +223,13 @@ const LaunchRequestHandler = {
                       "largeSourceUrl":null,
                       "sources":[
                          {
-                            "url": recipe.ImageURLs[0] || "https://d2o906d8ln7ui1.cloudfront.net/images/LT2_Background.png",
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/LT2_Background.png",
                             "size":"small",
                             "widthPixels":0,
                             "heightPixels":0
                          },
                          {
-                            "url": recipe.ImageURLs[0] || "https://d2o906d8ln7ui1.cloudfront.net/images/LT2_Background.png",
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/LT2_Background.png",
                             "size":"large",
                             "widthPixels":0,
                             "heightPixels":0
@@ -240,7 +242,7 @@ const LaunchRequestHandler = {
                 "listTemplate2ListData":{
                    "type":"list",
                    "listId":"lt2Sample",
-                   "totalNumberOfItems":10,
+                   "totalNumberOfItems":recipe.Ingredients.length,
                    "hintText":"Try, \"Alexa, give me recipe for veggie sandwich.\"",
                    "listPage":{
                       "listItems":recipe.Ingredients
@@ -260,6 +262,197 @@ const LaunchRequestHandler = {
     }
     }
   };
+
+  /******** Multiple Recipe HANDLER ********/
+  const MultipleRecipeIntentHandler = {
+    canHandle(handlerInput) {
+      return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+        && handlerInput.requestEnvelope.request.intent.name === 'multipleRecipeIntent';
+    },
+    async handle(handlerInput) {
+        var recipeValue = handlerInput.requestEnvelope.request.intent.slots.cuisine.value;
+        console.log("Got my recipe for multiple response", recipeValue);
+
+        let response = await makeHoundifyRequest({
+            query: "Show me recipes for " + recipeValue,
+            clientId:  config.clientId, 
+            clientKey: config.clientKey,
+            requestInfo: {
+                UserID: "test_user",
+                Latitude: 37.388309, 
+                Longitude: -121.973968
+            },
+            conversationState: conversationState
+        })
+
+        conversationState = response.AllResults[0].ConversationState;
+        console.log(response.AllResults[0].WrittenResponse);
+
+        recipes = response.AllResults[0].InformationNuggets[0].Results;
+        console.log('here is the response recipes+++++', recipes);
+
+        let recipeList = [];
+
+        for(var i=0; i<recipes.length; i++) {
+          let recipe_i = {
+            "primaryText": recipes[i].Name,
+            "secondaryText": 'Cuisine type: ' + recipes[i].CuisineType,
+            "ratingSlotMode": "multiple",
+            "ratingNumber": recipes[i].StarRating,
+            "ratingText": recipes[i].ReviewCount,
+            "imageAlignment": "right",
+            "imageSource": recipes[i].PhotoUrl,
+            "primaryAction": [
+                {
+                    "type": "SetValue",
+                    "componentId": "recipeList",
+                    "property": "headerTitle",
+                    "value": "${payload.imageListData.listItems["+i+"].primaryText} is selected"
+                },
+                {
+                  "type": "SendEvent",
+                  "arguments": [
+                    "${payload.imageListData.listItems["+i+"].primaryText} is selected"
+                  ]
+                }
+            ]
+        }
+        recipeList.push(recipe_i)
+        }
+
+    if (supportsAPL(handlerInput)) {
+        console.log('now rendering');
+        return handlerInput.responseBuilder
+        .addDirective({
+            type : 'Alexa.Presentation.APL.RenderDocument',
+            token: 'tokenRenderDocument',
+            version: '1.0',
+            document: 
+            {
+              "type": "APL",
+              "version": "1.4",
+              "settings": {},
+              "theme": "dark",
+              "import": [
+                  {
+                      "name": "alexa-layouts",
+                      "version": "1.2.0"
+                  }
+              ],
+              "resources": [],
+              "styles": {},
+              "onMount": [],
+              "graphics": {},
+              "commands": {},
+              "layouts": {},
+              "mainTemplate": {
+                  "parameters": [
+                      "payload"
+                  ],
+                  "items": [
+                      {
+                          "type": "AlexaImageList",
+                          "id": "recipeList",
+                          "headerTitle": "${payload.imageListData.title}",
+                          "headerBackButton": false,
+                          "headerAttributionImage": "${payload.imageListData.logoUrl}",
+                          "backgroundImageSource": "${payload.imageListData.backgroundImage.sources[0].url}",
+                          "backgroundBlur": false,
+                          "backgroundColorOverlay": true,
+                          "imageAspectRatio": "square",
+                          "imageMetadataPrimacy": true,
+                          "imageScale": "best-fill",
+                          "listItems": "${payload.imageListData.listItems}"
+                      }
+                  ]
+              }
+          },
+            datasources: 
+            {
+              "imageListData": {
+                  "type": "object",
+                  "objectId": "imageListSample",
+                  "backgroundImage": {
+                      "contentDescription": null,
+                      "smallSourceUrl": null,
+                      "largeSourceUrl": null,
+                      "sources": [
+                          {
+                              "url": "https://d2o906d8ln7ui1.cloudfront.net/images/templates_v2/bg_cheese_1.jpg",
+                              "size": "small",
+                              "widthPixels": 0,
+                              "heightPixels": 0
+                          },
+                          {
+                              "url": "https://d2o906d8ln7ui1.cloudfront.net/images/templates_v2/bg_cheese_1.jpg",
+                              "size": "large",
+                              "widthPixels": 0,
+                              "heightPixels": 0
+                          }
+                      ]
+                  },
+                  "title": "I found these recipes",
+                  "listItems": recipeList,
+                  "logoUrl": "https://d2o906d8ln7ui1.cloudfront.net/images/templates_v2/icon_cheese.png",
+                  "hintText": "Try, \"Alexa, what is today's cheesy joke?\""
+              }
+          }
+        })
+      //   .addDirective({
+      //     type: 'Alexa.Presentation.APL.ExecuteCommands',
+      //     token: 'tokenRenderDocument',
+      //     commands: [
+      //               {
+      //                 "type": "TouchWrapper",
+      //                 "id": "recipeList",
+      //                 "items": {
+      //                   "type": "Text",
+      //                   "id": "recipeList",
+      //                   "speech": "I told you not to touch",
+      //                 },
+      //                 "onPress": [
+      //                   {
+      //                     "type": "SpeakItem",
+      //                     "componentId": "recipeList"
+      //                   },
+      //                   {
+      //                     "type": "SendEvent",
+      //                     "arguments": [
+      //                       "The button was pushed and spoken have I"
+      //                     ],
+      //                     "components": [
+      //                       "recipeList"
+      //                     ]
+      //                   }
+      //                 ]
+      //               }
+      //             ]
+      // })
+        .speak("I found " +  recipes.length + " recipes.")
+        // .reprompt(recipe.Instructions[0])
+        .getResponse();
+    } else {
+        console.log('now speaking');
+        return handlerInput.responseBuilder
+        .speak("I found " +  recipes.Length + " recipes.")
+        // .reprompt(recipe.Instructions[0])
+        .getResponse();
+    }
+    }
+  };
+
+  const RecipeButtonEventHandler = {
+    canHandle(handlerInput){
+      console.log('I am in test testing test', handlerInput.requestEnvelope.request)
+        return (handlerInput.requestEnvelope.request.type === 'Alexa.Presentation.APL.UserEvent') },
+    handle(handlerInput) {
+      console.log('going to speak test')
+        return handlerInput.responseBuilder
+            .speak("Newton how do you do it.")
+            .getResponse();
+    }
+
+};
 
     /******** NEXT HANDLERS ********/
     const NextStepHandler = {
@@ -480,6 +673,8 @@ exports.handler = skillBuilder
   .addRequestHandlers(
     LaunchRequestHandler,
     RecipeIntentHandler,
+    MultipleRecipeIntentHandler,
+    RecipeButtonEventHandler,
     // YesIntentHandler,
     // AnswerIntentHandler,
     NextStepHandler,

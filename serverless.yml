@@ -16,7 +16,8 @@ app: kitchen-assist
 tenant: newtonjain
 provider:
   name: aws
-  runtime: nodejs8.10
+  profile: newton
+  runtime: nodejs12.x
 functions:
   hello:
     handler: index.handler
