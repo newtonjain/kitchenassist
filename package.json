@@ -17,7 +17,7 @@
     "express": "4.13.3",
     "houndify": "^2.2.0",
     "https": "^1.0.0",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.3",
     "path": "^0.12.7",
     "wav": "1.0.0",
     "websocket": "1.0.28"
