@@ -109,11 +109,11 @@ const LaunchRequestHandler = {
   /******** Recipe HANDLERS ********/
   const RecipeIntentHandler = {
     canHandle(handlerInput) {
-      console.log('%%%%%%%%%%%%%%%%% in recipe', handlerInput)
       return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-        && handlerInput.requestEnvelope.request.intent.name === 'recipeIntent';
+      && handlerInput.requestEnvelope.request.intent.name === 'recipeIntent';
     },
     async handle(handlerInput) {
+        console.log('%%%%%%%%%%%%%%%%% in recipe', handlerInput.requestEnvelope)
         var recipeValue = handlerInput.requestEnvelope.request.intent.slots.recipeName.value;
         console.log("Got my recipe brooo", recipeValue);
 
@@ -313,7 +313,8 @@ const LaunchRequestHandler = {
                 {
                   "type": "SendEvent",
                   "arguments": [
-                    "${payload.imageListData.listItems["+i+"].primaryText}"
+                    "${payload.imageListData.listItems["+i+"].primaryText}",
+                    "recipeSelectedByUser"
                   ]
                 }
             ]
@@ -461,11 +462,12 @@ const InProgressRecipeButtonEventHandler = {
   canHandle(handlerInput) {
       console.log('I am in test testing test%%%%%', handlerInput.requestEnvelope.request)
       return handlerInput.requestEnvelope.request.type === 'Alexa.Presentation.APL.UserEvent' &&
+      handlerInput.requestEnvelope.request.arguments[1] === 'recipeSelectedByUser' &&
       handlerInput.requestEnvelope.request.dialogState !== 'COMPLETED' &&
       handlerInput.requestEnvelope.request.dialogState !== 'IN_PROGRESS';
   },
-  handle(handlerInput) {
-    let newintent = {
+  async handle(handlerInput) {
+    var newintent = {
       "name": "recipeIntent",
       "confirmationStatus": "NONE",
       "slots": {
@@ -473,11 +475,7 @@ const InProgressRecipeButtonEventHandler = {
           "name": "recipeName",
           "value": handlerInput.requestEnvelope.request.arguments[0],
           "confirmationStatus": "NONE",
-          "source": "USER",
-          "slotValue": {
-            "type": "Simple",
-            "value": handlerInput.requestEnvelope.request.arguments[0]
-          }
+          "resolutions": {}
         }
       }
     }
@@ -486,19 +484,155 @@ const InProgressRecipeButtonEventHandler = {
 
   console.log('Lets get users what they want@@@@@', updatedIntent)
 
-      if (handlerInput.requestEnvelope.request.dialogState == "STARTED") {
-          return handlerInput.responseBuilder
-              .speak("111")
-              .getResponse();
-      } else if (handlerInput.requestEnvelope.request.dialogState !== 'COMPLETED') {
+      if (handlerInput.requestEnvelope.request.dialogState !== 'COMPLETED') {
 
-          return handlerInput.responseBuilder
-              // .speak("222")
-              .addDirective({
-                "type": "Dialog.Delegate",
-                "updatedIntent": updatedIntent
-              })
-              .getResponse();
+        var recipeValue = handlerInput.requestEnvelope.request.arguments[0];
+        console.log("Got my recipe brooo", recipeValue);
+
+        let response = await makeHoundifyRequest({
+            query: "show me the recipe for " + recipeValue,
+            clientId:  config.clientId, 
+            clientKey: config.clientKey,
+            requestInfo: {
+                UserID: "test_user",
+                Latitude: 37.388309, 
+                Longitude: -121.973968
+            },
+            conversationState: conversationState
+        })
+
+        conversationState = response.AllResults[0].ConversationState;
+        console.log(response.AllResults[0].WrittenResponse);
+
+        recipe = response.AllResults[0].InformationNuggets[0].DishDetails;
+        console.log('here is the response recipe////', recipe);
+        stepLength = recipe.Instructions.length;
+
+        let instructions = "";
+        for (let i =0;i < recipe.Instructions.length; i++) {
+            let j = i+1;
+            instructions =  instructions + '<br>'+ j + ')' + recipe.Instructions[i]
+        }
+
+        console.log('in the response, here are the number of steps', stepLength, 'and instruction 0', recipe.Instructions[0], 'and ingredients', recipe.Ingredients[0])
+
+    if (supportsAPL(handlerInput)) {
+        console.log('now rendering');
+        return handlerInput.responseBuilder
+        .addDirective({
+            type : 'Alexa.Presentation.APL.RenderDocument',
+            version: '1.0',
+            document: RecipeScreen,
+            datasources: {
+                "bodyTemplate3Data":{
+                   "type":"object",
+                   "objectId":"bt3Sample",
+                   "backgroundImage":{
+                      "contentDescription":null,
+                      "smallSourceUrl":null,
+                      "largeSourceUrl":null,
+                      "sources":[
+                         {
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/BT2_Background.png",
+                            "size":"small",
+                            "widthPixels":0,
+                            "heightPixels":0
+                         },
+                         {
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/BT2_Background.png",
+                            "size":"large",
+                            "widthPixels":0,
+                            "heightPixels":0
+                         }
+                      ]
+                   },
+                   "title":"Here is our top rated suggestion",
+                   "image":{
+                      "contentDescription":null,
+                      "smallSourceUrl":null,
+                      "largeSourceUrl":null,
+                      "sources":[
+                         {
+                            "url":"https://d2o906d8ln7ui1.cloudfront.net/images/details_bt3.png",
+                            "size":"small",
+                            "widthPixels":0,
+                            "heightPixels":0
+                         },
+                         {
+                            "url":"https://d2o906d8ln7ui1.cloudfront.net/images/details_bt3.png",
+                            "size":"large",
+                            "widthPixels":0,
+                            "heightPixels":0
+                         }
+                      ]
+                   },
+                   "textContent":{
+                      "title":{
+                         "type":"PlainText",
+                         "text":recipe.Name
+                      },
+                      "subtitle":{
+                         "type":"PlainText",
+                         "text": recipe.TotalMinutes + 'minutes'
+                      },
+                      "primaryText":{
+                         "type":"PlainText",
+                         "text": recipe.Description
+                      },
+                      "InstructionsText":{
+                         "type":"PlainText",
+                         "text": instructions
+                      }
+                   },
+                   "logoUrl":"https://s3.amazonaws.com/recipe-alexa-skill/logo/SmallLogo.png",
+                   "hintText":"Try, \"Alexa, give me recipe for veggie sandwich.\""
+                },
+                "listTemplate2Metadata":{
+                   "type":"object",
+                   "objectId":"lt1Metadata",
+                   "backgroundImage":{
+                      "contentDescription":null,
+                      "smallSourceUrl":null,
+                      "largeSourceUrl":null,
+                      "sources":[
+                         {
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/LT2_Background.png",
+                            "size":"small",
+                            "widthPixels":0,
+                            "heightPixels":0
+                         },
+                         {
+                            "url": recipe.ImageURL || "https://d2o906d8ln7ui1.cloudfront.net/images/LT2_Background.png",
+                            "size":"large",
+                            "widthPixels":0,
+                            "heightPixels":0
+                         }
+                      ]
+                   },
+                   "title":"Ingredients",
+                   "logoUrl":"https://s3.amazonaws.com/recipe-alexa-skill/logo/SmallLogo.png"
+                },
+                "listTemplate2ListData":{
+                   "type":"list",
+                   "listId":"lt2Sample",
+                   "totalNumberOfItems":recipe.Ingredients.length,
+                   "hintText":"Try, \"Alexa, give me recipe for veggie sandwich.\"",
+                   "listPage":{
+                      "listItems":recipe.Ingredients
+                   }
+                }
+             }
+        })
+        .speak("There are " +  stepLength + " steps, I will read them one by one, when you ready, ask Kitchen assist for the next step, here is the first step" + recipe.Instructions[0])
+        // .reprompt(recipe.Instructions[0])
+        .getResponse();
+    } else {
+        console.log('now speaking');
+        return handlerInput.responseBuilder
+        .speak("There are " +  stepLength + " steps, I will read them one by one, when you ready, ask Kitchen assist for the next step, here is the first step" + recipe.Instructions[0])
+        // .reprompt(recipe.Instructions[0])
+        .getResponse();
+    }
       } else {
         console.log('going to speak 321')
         return handlerInput.responseBuilder

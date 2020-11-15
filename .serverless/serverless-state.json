@@ -207,7 +207,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/kitchen-assist/dev/1605401034201-2020-11-15T00:43:54.201Z/kitchen-assist.zip"
+                "S3Key": "serverless/kitchen-assist/dev/1605406423509-2020-11-15T02:13:43.509Z/kitchen-assist.zip"
               },
               "FunctionName": "kitchen-assist-dev-hello",
               "Handler": "s_hello.handler",
@@ -225,14 +225,14 @@
               "HelloLogGroup"
             ]
           },
-          "HelloLambdaVersionmQcBYLxMLhiHWgN1Ui4Inen13oC2zKzZcYCakPsQ": {
+          "HelloLambdaVersionV2xbV9Mfmch6QNxIGxkyZIvCRj0Tq7ljFuvQGjHL9w": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "HelloLambdaFunction"
               },
-              "CodeSha256": "xdzqQbhvbDt72z5ewSOX0pcPpvv6vlTDBBmd5bgLJEA="
+              "CodeSha256": "iG6b4Yixz5dDugyqEjd/1z3upQQOtAoxfz68kcf1H7k="
             }
           },
           "CloudWatchLogsSubscriptionFilterHelloLogGroup": {
@@ -263,7 +263,7 @@
           "HelloLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HelloLambdaVersionmQcBYLxMLhiHWgN1Ui4Inen13oC2zKzZcYCakPsQ"
+              "Ref": "HelloLambdaVersionV2xbV9Mfmch6QNxIGxkyZIvCRj0Tq7ljFuvQGjHL9w"
             }
           }
         }
@@ -348,7 +348,7 @@
         "timeout": 6,
         "runtime": "nodejs12.x",
         "vpc": {},
-        "versionLogicalId": "HelloLambdaVersionmQcBYLxMLhiHWgN1Ui4Inen13oC2zKzZcYCakPsQ"
+        "versionLogicalId": "HelloLambdaVersionV2xbV9Mfmch6QNxIGxkyZIvCRj0Tq7ljFuvQGjHL9w"
       }
     },
     "serviceFilename": "serverless.yml",
@@ -362,7 +362,7 @@
     "artifact": "/Applications/MAMP/htdocs/projects/projects/Alexa-hackthon/KitchenAssist/.serverless/kitchen-assist.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/kitchen-assist/dev/1605401034201-2020-11-15T00:43:54.201Z",
+    "artifactDirectoryName": "serverless/kitchen-assist/dev/1605406423509-2020-11-15T02:13:43.509Z",
     "artifact": "kitchen-assist.zip"
   }
 }
