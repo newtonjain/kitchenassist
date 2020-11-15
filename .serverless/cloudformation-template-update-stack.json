@@ -192,7 +192,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/kitchen-assist/dev/1605384124121-2020-11-14T20:02:04.121Z/kitchen-assist.zip"
+          "S3Key": "serverless/kitchen-assist/dev/1605401034201-2020-11-15T00:43:54.201Z/kitchen-assist.zip"
         },
         "FunctionName": "kitchen-assist-dev-hello",
         "Handler": "s_hello.handler",
@@ -210,14 +210,14 @@
         "HelloLogGroup"
       ]
     },
-    "HelloLambdaVersionX668pVNl5RzDjLTheIofe8c0zNd2f8k1ifqtlfOj7LU": {
+    "HelloLambdaVersionmQcBYLxMLhiHWgN1Ui4Inen13oC2zKzZcYCakPsQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "HelloLambdaFunction"
         },
-        "CodeSha256": "Gf9nTxuf4OaD+1kHNappu+pSFpQXnwckkT/C+ufs0iQ="
+        "CodeSha256": "xdzqQbhvbDt72z5ewSOX0pcPpvv6vlTDBBmd5bgLJEA="
       }
     },
     "CloudWatchLogsSubscriptionFilterHelloLogGroup": {
@@ -248,7 +248,7 @@
     "HelloLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "HelloLambdaVersionX668pVNl5RzDjLTheIofe8c0zNd2f8k1ifqtlfOj7LU"
+        "Ref": "HelloLambdaVersionmQcBYLxMLhiHWgN1Ui4Inen13oC2zKzZcYCakPsQ"
       }
     }
   }

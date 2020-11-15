@@ -1,4 +1,4 @@
-const Alexa = require('ask-sdk-core');
+const Alexa = require('ask-sdk');
 const RecipeScreen = require('RecipeScreen.json');
 const Welcome = require('Welcome.json');
 const Datasources = require('Datasources.json'); 
@@ -109,6 +109,7 @@ const LaunchRequestHandler = {
   /******** Recipe HANDLERS ********/
   const RecipeIntentHandler = {
     canHandle(handlerInput) {
+      console.log('%%%%%%%%%%%%%%%%% in recipe', handlerInput)
       return handlerInput.requestEnvelope.request.type === 'IntentRequest'
         && handlerInput.requestEnvelope.request.intent.name === 'recipeIntent';
     },
@@ -312,7 +313,7 @@ const LaunchRequestHandler = {
                 {
                   "type": "SendEvent",
                   "arguments": [
-                    "${payload.imageListData.listItems["+i+"].primaryText} is selected"
+                    "${payload.imageListData.listItems["+i+"].primaryText}"
                   ]
                 }
             ]
@@ -446,13 +447,67 @@ const LaunchRequestHandler = {
       console.log('I am in test testing test', handlerInput.requestEnvelope.request)
         return (handlerInput.requestEnvelope.request.type === 'Alexa.Presentation.APL.UserEvent') },
     handle(handlerInput) {
-      console.log('going to speak test')
+      console.log('going to speak 123')
         return handlerInput.responseBuilder
             .speak("Newton how do you do it.")
+            .withShouldEndSession(false)
             .getResponse();
     }
 
 };
+
+
+const InProgressRecipeButtonEventHandler = {
+  canHandle(handlerInput) {
+      console.log('I am in test testing test%%%%%', handlerInput.requestEnvelope.request)
+      return handlerInput.requestEnvelope.request.type === 'Alexa.Presentation.APL.UserEvent' &&
+      handlerInput.requestEnvelope.request.dialogState !== 'COMPLETED' &&
+      handlerInput.requestEnvelope.request.dialogState !== 'IN_PROGRESS';
+  },
+  handle(handlerInput) {
+    let newintent = {
+      "name": "recipeIntent",
+      "confirmationStatus": "NONE",
+      "slots": {
+        "recipeName": {
+          "name": "recipeName",
+          "value": handlerInput.requestEnvelope.request.arguments[0],
+          "confirmationStatus": "NONE",
+          "source": "USER",
+          "slotValue": {
+            "type": "Simple",
+            "value": handlerInput.requestEnvelope.request.arguments[0]
+          }
+        }
+      }
+    }
+
+  const updatedIntent = newintent;
+
+  console.log('Lets get users what they want@@@@@', updatedIntent)
+
+      if (handlerInput.requestEnvelope.request.dialogState == "STARTED") {
+          return handlerInput.responseBuilder
+              .speak("111")
+              .getResponse();
+      } else if (handlerInput.requestEnvelope.request.dialogState !== 'COMPLETED') {
+
+          return handlerInput.responseBuilder
+              // .speak("222")
+              .addDirective({
+                "type": "Dialog.Delegate",
+                "updatedIntent": updatedIntent
+              })
+              .getResponse();
+      } else {
+        console.log('going to speak 321')
+        return handlerInput.responseBuilder
+            .speak("Newton in else progress")
+            .withShouldEndSession(false)
+            .getResponse();
+      }
+  }
+}
 
     /******** NEXT HANDLERS ********/
     const NextStepHandler = {
@@ -674,7 +729,8 @@ exports.handler = skillBuilder
     LaunchRequestHandler,
     RecipeIntentHandler,
     MultipleRecipeIntentHandler,
-    RecipeButtonEventHandler,
+    // RecipeButtonEventHandler,
+    InProgressRecipeButtonEventHandler,
     // YesIntentHandler,
     // AnswerIntentHandler,
     NextStepHandler,
